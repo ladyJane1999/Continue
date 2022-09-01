@@ -2,6 +2,23 @@
 {
     static async Task Main(string[] args)
     {
+        // Similar Delay
+        Task<int> GetAnswerToLife()
+        {
+            var tsc = new TaskCompletionSource<int>();
+            var timer = new System.Timers.Timer(10)
+            {
+                AutoReset = false,
+            };
+            timer.Elapsed += delegate { timer.Dispose(); tsc.SetResult(42); };
+            timer.Start();
+            return tsc.Task;
+        }
+        var awaiter = GetAnswerToLife().GetAwaiter();
+
+        awaiter.OnCompleted(() => Console.WriteLine(awaiter.GetResult()));
+
+        // Wait
         await Deliver();
     }
 
