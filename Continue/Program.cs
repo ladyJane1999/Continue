@@ -1,55 +1,53 @@
-﻿class Program
+class Program
 {
+
     static async Task Main(string[] args)
     {
-        // Similar Delay
-        Task<int> GetAnswerToLife()
-        {
-            var tsc = new TaskCompletionSource<int>();
-            var timer = new System.Timers.Timer(10)
-            {
-                AutoReset = false,
-            };
-            timer.Elapsed += delegate { timer.Dispose(); tsc.SetResult(42); };
-            timer.Start();
-            return tsc.Task;
-        }
-        var awaiter = GetAnswerToLife().GetAwaiter();
+         Deliver().Wait();
+        Console.ReadKey();
 
-        awaiter.OnCompleted(() => Console.WriteLine(awaiter.GetResult()));
-
-        // Wait
-        await Deliver();
     }
-
-    static async Task Deliver()
+    static Task Deliver()
     {
-        await Task.WhenAll(CourierA(), CourierB());
-        Console.WriteLine("Delivered");
+        var task = Task
+            .WhenAll(CourierA(), CourierB())
+            .ContinueWith(t => Console.WriteLine("Done"));
+        var awaits = task.GetAwaiter();
+
+        return task;
+    }
+    static Task CourierA()
+    {
+        var task = Task.Delay(1000);
+        var awaiters = task.GetAwaiter();
+        awaiters.OnCompleted(() => Console.WriteLine("Courier A delivered")) ;
+        return task;
     }
 
-    static async Task CourierA()
+    static  Task CourierB()
     {
-        await Task.Delay(1000);
-        Console.WriteLine("Courier A delivered");
+        var task = Task.Delay(1500).ContinueWith(s=> Task.WhenAll(Loader1(), Loader2())).Unwrap();
+        
+        var awaiters = task.GetAwaiter();
+        awaiters.OnCompleted(() => Console.WriteLine("Courier B delivered"));
+        return task;    
     }
 
-    static async Task CourierB()
+    static  Task Loader1()
     {
-        await Task.Delay(1500);
-        await Task.WhenAll(Loader1(), Loader2());
-        Console.WriteLine("Courier B delivered");
+        var task = Task.Delay(500);
+        var awaiters = task.GetAwaiter();
+       awaiters.OnCompleted(() => Console.WriteLine("Loader 1 delivered"));
+        return task;
     }
 
-    static async Task Loader1()
+    static  Task Loader2()
     {
-        await Task.Delay(500);
-        Console.WriteLine("Loader 1 delivered");
+        var task = Task.Delay(600);
+        var awaiters = task.GetAwaiter();
+        awaiters.OnCompleted(() => Console.WriteLine("Loader 2 delivered"));
+        return task;
     }
+  
 
-    static async Task Loader2()
-    {
-        await Task.Delay(600);
-        Console.WriteLine("Loader 2 delivered");
-    }
 }
